@@ -39,6 +39,16 @@ SyslogIdentifier=%n
 User=playerpath
 ```
 
+### Using a reverse proxy
+
+When running behind a reverse proxy such as NGiNX, the proxy needs to be configured to ignore the client closing the connection. Else certain endpoints such as BF2Hub's `getrankstatus.aspx` will not work correctly.
+
+For NGiNX, simply add the following to the relevant http/server/location configuration.
+
+```
+proxy_ignore_client_abort on;
+```
+
 ### Redirecting ASPX HTTP traffic to playerpath
 
 To make your Battlefield 2 server use playerpath, you need to redirect all HTTP traffic for the game's ASPX endpoints to playerpath. On Linux, you can use `iptables` to achieve this. Using the IP addresses behind `servers.bf2hub.com` as an example, you could use (as root/with `sudo`):
