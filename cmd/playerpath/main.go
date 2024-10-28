@@ -103,6 +103,7 @@ func main() {
 	// Requests forwarded based on player provider
 	e.GET("/ASP/getplayerinfo.aspx", h.HandleDynamicForward)
 	e.GET("/ASP/getawardsinfo.aspx", h.HandleDynamicForward)
+	e.GET("/ASP/getunlocksinfo.aspx", h.HandleDynamicForward)
 	e.GET("/ASP/getrankinfo.aspx", h.HandleDynamicForward)
 
 	// Fallback forward to default provider
