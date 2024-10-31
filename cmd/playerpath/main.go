@@ -109,5 +109,8 @@ func main() {
 	// Fallback forward to default provider
 	e.Any("/ASP/*.aspx", h.HandleStaticForward)
 
+	// API routes
+	e.GET("/api/player/:pid", h.HandleGetPlayer)
+
 	e.Logger.Fatal(e.Start(opts.ListenAddr))
 }
