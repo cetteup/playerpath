@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/unlockproxy.iml" filepath="$PROJECT_DIR$/.idea/unlockproxy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/playerpath.iml" filepath="$PROJECT_DIR$/.idea/playerpath.iml" />
     </modules>
   </component>
 </project>
