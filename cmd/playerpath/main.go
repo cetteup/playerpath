@@ -100,17 +100,18 @@ func main() {
 		},
 	}))
 
+	asp := e.Group("/ASP")
 	// Requests forwarded based on player provider
-	e.GET("/ASP/getplayerinfo.aspx", h.HandleDynamicForward)
-	e.GET("/ASP/getawardsinfo.aspx", h.HandleDynamicForward)
-	e.GET("/ASP/getunlocksinfo.aspx", h.HandleDynamicForward)
-	e.GET("/ASP/getrankinfo.aspx", h.HandleDynamicForward)
-
+	asp.GET("/getplayerinfo.aspx", h.HandleDynamicForward)
+	asp.GET("/getawardsinfo.aspx", h.HandleDynamicForward)
+	asp.GET("/getunlocksinfo.aspx", h.HandleDynamicForward)
+	asp.GET("/getrankinfo.aspx", h.HandleDynamicForward)
 	// Fallback forward to default provider
-	e.Any("/ASP/*.aspx", h.HandleStaticForward)
+	asp.Any("/*.aspx", h.HandleStaticForward)
 
 	// API routes
-	e.GET("/api/player/:pid", h.HandleGetPlayer)
+	api := e.Group("/api")
+	api.GET("/player/:pid", h.HandleGetPlayer)
 
 	e.Logger.Fatal(e.Start(opts.ListenAddr))
 }
