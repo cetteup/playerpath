@@ -106,6 +106,8 @@ func main() {
 	asp.GET("/getawardsinfo.aspx", h.HandleDynamicForward)
 	asp.GET("/getunlocksinfo.aspx", h.HandleDynamicForward)
 	asp.GET("/getrankinfo.aspx", h.HandleDynamicForward)
+	// Requests with special/split handling
+	asp.GET("/VerifyPlayer.aspx", h.HandleGetVerifyPlayer)
 	// Fallback forward to default provider
 	asp.Any("/*.aspx", h.HandleStaticForward)
 
