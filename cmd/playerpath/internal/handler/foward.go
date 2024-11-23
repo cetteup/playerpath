@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"context"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -11,7 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/asp"
-	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/trace"
 )
@@ -22,6 +19,8 @@ type UpstreamResponse struct {
 	Body       []byte
 }
 
+// HandleDynamicForward Handle requests that are forwarded on a per-player basis.
+// Dynamic meaning that two requests from a single server for two different players may be forwarded to different providers.
 func (h *Handler) HandleDynamicForward(c echo.Context) error {
 	p := struct {
 		PID int `query:"pid"`
@@ -30,7 +29,7 @@ func (h *Handler) HandleDynamicForward(c echo.Context) error {
 		return c.String(http.StatusOK, asp.NewSyntaxErrorResponse().Serialize())
 	}
 
-	pv, err := h.determineProvider(c.Request().Context(), p.PID)
+	pv, err := h.determineProvider(c.Request().Context(), p.PID, c.RealIP())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}
@@ -38,8 +37,10 @@ func (h *Handler) HandleDynamicForward(c echo.Context) error {
 	return h.handleForward(c, pv)
 }
 
+// HandleStaticForward Handle requests that are forwarded on a per-server basis.
+// Static only in the sense that any request from a given server will be forwarded to the same provider.
 func (h *Handler) HandleStaticForward(c echo.Context) error {
-	return h.handleForward(c, h.provider)
+	return h.handleForward(c, h.getServerOrDefaultProvider(c.RealIP()))
 }
 
 func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
@@ -95,25 +96,4 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 	}
 
 	return c.String(res.StatusCode, string(bytes))
-}
-
-func (h *Handler) determineProvider(ctx context.Context, pid int) (provider.Provider, error) {
-	p, err := h.repository.FindByPID(ctx, pid)
-	if err != nil {
-		if errors.Is(err, player.ErrPlayerNotFound) {
-			log.Warn().
-				Int(trace.LogPlayerPID, pid).
-				Msg("Player not found, falling back to default provider")
-			return h.provider, nil
-		}
-		if errors.Is(err, player.ErrMultiplePlayersFound) {
-			log.Warn().
-				Int(trace.LogPlayerPID, pid).
-				Msg("Found multiple players, falling back to default provider")
-			return h.provider, nil
-		}
-		return 0, err
-	}
-
-	return p.Provider, nil
 }
