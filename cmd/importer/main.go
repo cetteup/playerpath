@@ -98,6 +98,8 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 		stats := struct {
 			processed int
 			imported  int
+			added     int
+			updated   int
 		}{}
 		name := path.Join(basePath, fmt.Sprintf("v_%s.dat", pv.String()))
 		batch := make([]player.Player, 0, batchSize)
@@ -111,11 +113,13 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 			})
 
 			if len(batch) == cap(batch) {
-				imported, err2 := insert(ctx, repository, pv, batch)
+				added, updated, err2 := upsert(ctx, repository, pv, batch)
 				if err2 != nil {
 					return err2
 				}
-				stats.imported += imported
+				stats.imported += added + updated
+				stats.added += added
+				stats.updated += updated
 				batch = batch[:0]
 			}
 
@@ -127,24 +131,28 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 
 		// Upsert any remaining, incomplete batch
 		if len(batch) > 0 {
-			imported, err2 := insert(ctx, repository, pv, batch)
+			added, updated, err2 := upsert(ctx, repository, pv, batch)
 			if err2 != nil {
 				return err2
 			}
-			stats.imported += imported
+			stats.imported += added + updated
+			stats.added += added
+			stats.updated += updated
 		}
 
 		log.Info().
 			Int("processed", stats.processed).
+			Int("added", stats.added).
+			Int("updated", stats.updated).
 			Msgf("Imported %d players from %s", stats.imported, pv)
 	}
 
 	return nil
 }
 
-func insert(ctx context.Context, repository player.Repository, pv provider.Provider, players []player.Player) (int, error) {
+func upsert(ctx context.Context, repository player.Repository, pv provider.Provider, players []player.Player) (int, int, error) {
 	if len(players) == 0 {
-		return 0, nil
+		return 0, 0, nil
 	}
 
 	// Ensure players are sorted ascending by PID
@@ -154,39 +162,54 @@ func insert(ctx context.Context, repository player.Repository, pv provider.Provi
 
 	existing, err := repository.FindByProviderBetweenPIDs(ctx, pv, players[0].PID, players[len(players)-1].PID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to find existing players: %w", err)
+		return 0, 0, fmt.Errorf("failed to find existing players: %w", err)
 	}
 
 	// Create map for consistently fast lookups
-	catalog := make(map[int]struct{}, len(existing))
+	catalog := make(map[int]string, len(existing))
 	for _, p := range existing {
-		catalog[p.PID] = struct{}{}
+		catalog[p.PID] = p.Nick
 	}
 
-	nonexistent := make([]player.Player, 0, len(players))
+	insert := make([]player.Player, 0, len(players))
+	update := make([]player.Player, 0)
 	for _, p := range players {
-		if _, exists := catalog[p.PID]; !exists {
-			nonexistent = append(nonexistent, p)
+		if nick, exists := catalog[p.PID]; !exists {
+			insert = append(insert, p)
+		} else if p.Nick != nick {
+			update = append(update, p)
 		}
 	}
 
-	// Insert cannot handle empty slices, so return if there's nothing to insert
-	if len(nonexistent) == 0 {
-		return 0, nil
+	if len(insert) != 0 {
+		err2 := repository.InsertMany(ctx, insert)
+		if err2 != nil {
+			return 0, 0, fmt.Errorf("failed to insert new players: %w", err2)
+		}
+
+		for _, p := range insert {
+			log.Debug().
+				Int(trace.LogPlayerPID, p.PID).
+				Str(trace.LogPlayerNick, p.Nick).
+				Stringer(trace.LogProvider, pv).
+				Msg("Added new player")
+		}
 	}
 
-	err = repository.InsertMany(ctx, nonexistent)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert new players: %w", err)
+	if len(update) != 0 {
+		err2 := repository.UpdateMany(ctx, update)
+		if err2 != nil {
+			return 0, 0, fmt.Errorf("failed to update existing players: %w", err2)
+		}
+
+		for _, p := range update {
+			log.Debug().
+				Int(trace.LogPlayerPID, p.PID).
+				Str(trace.LogPlayerNick, p.Nick).
+				Stringer(trace.LogProvider, pv).
+				Msg("Updated existing player")
+		}
 	}
 
-	for _, p := range nonexistent {
-		log.Debug().
-			Int(trace.LogPlayerPID, p.PID).
-			Str(trace.LogPlayerNick, p.Nick).
-			Stringer(trace.LogProvider, pv).
-			Msg("Imported player")
-	}
-
-	return len(nonexistent), nil
+	return len(insert), len(update), nil
 }

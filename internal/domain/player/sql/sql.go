@@ -8,6 +8,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/go-sql-driver/mysql"
+	"github.com/rs/zerolog/log"
 
 	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/provider"
@@ -85,6 +86,45 @@ func (r *Repository) InsertMany(ctx context.Context, players []player.Player) er
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			return player.ErrPlayerExists
 		}
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateMany(ctx context.Context, players []player.Player) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err2 := tx.Rollback()
+		if err2 != nil {
+			// Ignore already committed/rolled back error
+			if !errors.Is(err2, sql.ErrTxDone) {
+				log.Error().
+					Err(err2).
+					Msg("Failed to rollback update many players transaction")
+			}
+		}
+	}()
+
+	for _, p := range players {
+		query := sq.
+			Update(playerTable).
+			Set(columnNick, p.Nick).
+			Where(sq.And{
+				sq.Eq{columnPID: p.PID},
+				sq.Eq{columnProvider: p.Provider},
+			})
+
+		_, err2 := query.RunWith(tx).ExecContext(ctx)
+		if err2 != nil {
+			return err2
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

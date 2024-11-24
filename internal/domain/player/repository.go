@@ -16,6 +16,7 @@ var (
 type Repository interface {
 	Insert(ctx context.Context, player Player) error
 	InsertMany(ctx context.Context, players []Player) error
+	UpdateMany(ctx context.Context, players []Player) error
 	FindByPID(ctx context.Context, pid int) (Player, error)
 	FindByProviderBetweenPIDs(ctx context.Context, pv provider.Provider, lower, upper int) ([]Player, error)
 }
