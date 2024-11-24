@@ -11,7 +11,6 @@ import (
 
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/asp"
 	"github.com/cetteup/playerpath/internal/domain/player"
-	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/trace"
 )
 
@@ -31,11 +30,20 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 	p, err := h.repository.FindByPID(c.Request().Context(), params.PID)
 	if err != nil {
 		if errors.Is(err, player.ErrPlayerNotFound) {
-			log.Warn().
-				Int(trace.LogPlayerPID, params.PID).
-				Msg("Player not found, treating as unverified")
+			event := log.Warn().
+				Int(trace.LogPlayerPID, params.PID)
+
+			// Defer verification to server/global default provider if possible
+			if pv := h.getServerOrDefaultProvider(c.RealIP()); pv.SupportsPlayerVerification() {
+				event.
+					Stringer(trace.LogProvider, pv).
+					Msg("Player not found, deferring verification to default provider")
+				return h.handleForward(c, pv)
+			}
+
 			// Treating not found as unverified here to ensure you cannot bypass verification simply by using
 			// an unknown PID when using a non-verifying default provider such as BF2Hub
+			event.Msg("Player not found, treating as unverified")
 			return c.String(http.StatusOK, buildResponse(
 				addInvalidPrefix(params.Nick),
 				params.Nick,
@@ -44,26 +52,39 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 			).Serialize())
 		}
 		if errors.Is(err, player.ErrMultiplePlayersFound) {
-			log.Warn().
-				Int(trace.LogPlayerPID, params.PID).
-				Msg("Found multiple players, using default provider to verify player")
-			// Using the default provider here isn't great either, but there is no clean solution to this conflict
-			// If we treat the conflict as a verification failure, neither of the conflicting PID players will pass
+			event := log.Warn().
+				Int(trace.LogPlayerPID, params.PID)
+
 			// By leaving the verification up to the default provider (which should be the provider used by the server),
-			// the provider can (potentially) resolve the conflict based on the `auth` parameter
-			return h.handleForward(c, h.getServerOrDefaultProvider(c.RealIP()))
+			// the provider can (potentially) resolve the conflict (e.g. based on the `auth` parameter)
+			if pv := h.getServerOrDefaultProvider(c.RealIP()); pv.SupportsPlayerVerification() {
+				event.
+					Stringer(trace.LogProvider, pv).
+					Msg("Found multiple players, using default provider to verify player")
+				return h.handleForward(c, pv)
+			}
+
+			// Again: Treat as unverified to not enable verification bypass by using a conflicting PID
+			// This does mean that players with conflicting PIDs will be unable to play on some servers,
+			// but there is no clean solution to this conflict from the outside
+			event.Msg("Found multiple players, treating as unverified")
+			return c.String(http.StatusOK, buildResponse(
+				addInvalidPrefix(params.Nick),
+				params.Nick,
+				dummyPID,
+				params.PID,
+			).Serialize())
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(fmt.Errorf("failed to find player: %w", err))
 	}
 
-	switch p.Provider {
-	case provider.ProviderBF2Hub, provider.ProviderB2BF2:
-		// Neither BF2Hub nor B2BF2 currently offer a (compatible) VerifyPlayer.aspx endpoint
-		// All we can do is validate that an account with the given pid and name exists
-		return c.String(http.StatusOK, buildResponse(p.Nick, params.Nick, p.PID, params.PID).Serialize())
-	default:
+	// Let the player's provider verify if possible
+	if p.Provider.SupportsPlayerVerification() {
 		return h.handleForward(c, p.Provider)
 	}
+
+	// All we can do here is validate that an account with the given pid and name exists
+	return c.String(http.StatusOK, buildResponse(p.Nick, params.Nick, p.PID, params.PID).Serialize())
 }
 
 // buildResponse Signature analog to default onPlayerNameValidated handler

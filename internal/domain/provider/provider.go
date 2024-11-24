@@ -68,6 +68,16 @@ func (p Provider) RequiresGameSpyHost() bool {
 }
 
 //goland:noinspection GoMixedReceiverTypes
+func (p Provider) SupportsPlayerVerification() bool {
+	switch p {
+	case ProviderPlayBF2, ProviderOpenSpy, ProviderB2BF2:
+		return true
+	default:
+		return false
+	}
+}
+
+//goland:noinspection GoMixedReceiverTypes
 func (p *Provider) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
 		*p = ProviderUnknown
