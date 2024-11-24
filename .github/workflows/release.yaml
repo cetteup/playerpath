@@ -39,7 +39,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          goversion: 1.19.5
+          goversion: 1.23.2
           project_path: cmd/playerpath
           ldflags: "-X 'main.buildTime=${{ needs.meta.outputs.date }}' -X 'main.buildCommit=${{ github.sha }}' -X 'main.buildVersion=${{ github.ref_name }}'"
           sha256sum: true
