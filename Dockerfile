@@ -21,7 +21,7 @@ COPY . ./
 
 RUN go build -v \
     -o /app/bin/playerpath \
-    -ldflags="-X 'main.buildTime=$build_time' -X 'main.buildCommit=$build_commit_sha' -X 'main.buildVersion=$build_version'" \
+    -ldflags="-s -w -X 'main.buildTime=$build_time' -X 'main.buildCommit=$build_commit_sha' -X 'main.buildVersion=$build_version'" \
     /app/src/cmd/playerpath
 
 FROM gcr.io/distroless/base-debian11
