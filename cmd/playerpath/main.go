@@ -15,6 +15,7 @@ import (
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/options"
 	"github.com/cetteup/playerpath/internal/database"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
+	"github.com/cetteup/playerpath/internal/domain/provider"
 )
 
 var (
@@ -67,8 +68,13 @@ func main() {
 		}
 	}()
 
+	servers := make(map[string]provider.Provider, len(cfg.Servers))
+	for _, server := range cfg.Servers {
+		servers[server.IP] = server.Provider
+	}
+
 	repository := sql.NewRepository(db)
-	h := handler.NewHandler(repository, opts.Provider)
+	h := handler.NewHandler(repository, servers, opts.Provider)
 
 	e := echo.New()
 	e.HideBanner = true

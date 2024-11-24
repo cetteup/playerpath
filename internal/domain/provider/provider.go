@@ -7,6 +7,7 @@ import (
 type Provider int
 
 const (
+	ProviderUnknown Provider = 0
 	ProviderBF2Hub  Provider = 1
 	ProviderPlayBF2 Provider = 2
 	ProviderOpenSpy Provider = 3
@@ -69,7 +70,7 @@ func (p Provider) RequiresGameSpyHost() bool {
 //goland:noinspection GoMixedReceiverTypes
 func (p *Provider) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
-		*p = 0
+		*p = ProviderUnknown
 		return nil
 	}
 

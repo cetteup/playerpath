@@ -51,7 +51,7 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 			// If we treat the conflict as a verification failure, neither of the conflicting PID players will pass
 			// By leaving the verification up to the default provider (which should be the provider used by the server),
 			// the provider can (potentially) resolve the conflict based on the `auth` parameter
-			return h.handleForward(c, h.provider)
+			return h.handleForward(c, h.getServerOrDefaultProvider(c.RealIP()))
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(fmt.Errorf("failed to find player: %w", err))
 	}

@@ -26,7 +26,7 @@ func Init() *Options {
 	flag.BoolVar(&opts.ColorizeLogs, "colorize-logs", false, "colorize log messages")
 	flag.StringVar(&opts.ListenAddr, "address", ":8080", "server/bind address in format [host]:port")
 	flag.StringVar(&opts.ConfigPath, "config", "config.yaml", "path to YAML config file")
-	flag.TextVar(&opts.Provider, "provider", provider.ProviderB2BF2, "primary provider to use as fallback/for directly proxied endpoints (bf2hub|playbf2|openspy|b2bf2)")
+	flag.TextVar(&opts.Provider, "provider", provider.ProviderB2BF2, "provider to use as fallback if one cannot be selected based on player/server (bf2hub|playbf2|openspy|b2bf2)")
 	flag.Parse()
 	return opts
 }
