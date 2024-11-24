@@ -20,7 +20,6 @@ jobs:
           echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
   release-bin:
-    name: Release Go Binary
     runs-on: ubuntu-latest
     needs:
       - meta
@@ -29,6 +28,7 @@ jobs:
 
     strategy:
       matrix:
+        cmd: [ playerpath, importer ]
         goos: [ windows, linux ]
         goarch: [ "386", amd64 ]
 
@@ -40,9 +40,11 @@ jobs:
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           goversion: 1.23.2
-          project_path: cmd/playerpath
+          project_path: cmd/${{ matrix.cmd }}
+          binary_name: ${{ matrix.cmd }}
           ldflags: "-s -w -X 'main.buildTime=${{ needs.meta.outputs.date }}' -X 'main.buildCommit=${{ github.sha }}' -X 'main.buildVersion=${{ github.ref_name }}'"
           sha256sum: true
+          asset_name: ${{ matrix.cmd }}-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
 
   release-image:
     runs-on: ubuntu-latest
