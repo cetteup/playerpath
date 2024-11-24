@@ -30,7 +30,7 @@ jobs:
       matrix:
         cmd: [ playerpath, importer ]
         goos: [ windows, linux ]
-        goarch: [ "386", amd64 ]
+        goarch: [ amd64 ]
 
     steps:
       - uses: actions/checkout@v4
