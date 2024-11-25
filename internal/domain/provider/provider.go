@@ -78,6 +78,17 @@ func (p Provider) SupportsPlayerVerification() bool {
 }
 
 //goland:noinspection GoMixedReceiverTypes
+func (p Provider) AllowsCaseInsensitiveLogin() bool {
+	switch p {
+	// BF2Hub allows players to log in with any spelling/casing of their name
+	case ProviderBF2Hub:
+		return true
+	default:
+		return false
+	}
+}
+
+//goland:noinspection GoMixedReceiverTypes
 func (p *Provider) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
 		*p = ProviderUnknown

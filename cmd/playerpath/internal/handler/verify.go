@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/asp"
 	"github.com/cetteup/playerpath/internal/domain/player"
+	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/trace"
 )
 
@@ -44,12 +46,7 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 			// Treating not found as unverified here to ensure you cannot bypass verification simply by using
 			// an unknown PID when using a non-verifying default provider such as BF2Hub
 			event.Msg("Player not found, treating as unverified")
-			return c.String(http.StatusOK, buildResponse(
-				addInvalidPrefix(params.Nick),
-				params.Nick,
-				dummyPID,
-				params.PID,
-			).Serialize())
+			return c.String(http.StatusOK, buildResponse(provider.ProviderUnknown, addInvalidPrefix(params.Nick), params.Nick, dummyPID, params.PID).Serialize())
 		}
 		if errors.Is(err, player.ErrMultiplePlayersFound) {
 			event := log.Warn().
@@ -69,6 +66,7 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 			// but there is no clean solution to this conflict from the outside
 			event.Msg("Found multiple players, treating as unverified")
 			return c.String(http.StatusOK, buildResponse(
+				provider.ProviderUnknown,
 				addInvalidPrefix(params.Nick),
 				params.Nick,
 				dummyPID,
@@ -84,29 +82,48 @@ func (h *Handler) HandleGetVerifyPlayer(c echo.Context) error {
 	}
 
 	// All we can do here is validate that an account with the given pid and name exists
-	return c.String(http.StatusOK, buildResponse(p.Nick, params.Nick, p.PID, params.PID).Serialize())
+	return c.String(http.StatusOK, buildResponse(p.Provider, p.Nick, params.Nick, p.PID, params.PID).Serialize())
 }
 
 // buildResponse Signature analog to default onPlayerNameValidated handler
-func buildResponse(realNick, oldNick string, realPID, oldPID int) *asp.Response {
+func buildResponse(pv provider.Provider, realNick, oldNick string, realPID, oldPID int) *asp.Response {
 	resp := asp.NewOKResponse().
-		WriteHeader("pid", "nick", "spid", "asof").
-		WriteData(strconv.Itoa(realPID), realNick, strconv.Itoa(oldPID), asp.Timestamp()).
-		WriteHeader("result")
+		WriteHeader("pid", "nick", "spid", "asof")
 
-	if realNick == oldNick && realPID == oldPID {
-		resp.WriteData("Ok")
-	} else if realNick != oldNick && realPID != oldPID {
-		// We obviously cannot validate the auth param, but neither value matching would indicate
-		// that the player was not found and this is the closest to "completely invalid" there is
-		// (no player can be logged into a profile that does not exist)
-		resp.WriteData("InvalidAuthProfileID")
-	} else if realNick != oldNick {
-		resp.WriteData("InvalidReportedNick")
+	// Use case-insensitive comparison for providers allowing login regardless of account name case
+	equalString := func(s, t string) bool { return s == t }
+	if pv.AllowsCaseInsensitiveLogin() {
+		equalString = strings.EqualFold
+	}
+
+	if equalString(realNick, oldNick) && realPID == oldPID {
+		resp.
+			// Using oldNick instead of realNick here to ensure we return the (determined matching) name as-is
+			// The Python onPlayerNameValidated only receives and compares the old/real values (case-sensitive!)
+			// Returning realNick would cause players with mismatched case to be banned, even if their login backend allows it
+			WriteData(strconv.Itoa(realPID), oldNick, strconv.Itoa(oldPID), asp.Timestamp()).
+			WriteHeader("result").
+			WriteData("Ok")
+	} else if !equalString(realNick, oldNick) && realPID != oldPID {
+		resp.
+			WriteData(strconv.Itoa(realPID), realNick, strconv.Itoa(oldPID), asp.Timestamp()).
+			WriteHeader("result").
+			// We obviously cannot validate the auth param, but neither value matching would indicate
+			// that the player was not found and this is the closest to "completely invalid" there is
+			// (no player can be logged into a profile that does not exist)
+			WriteData("InvalidAuthProfileID")
+	} else if !equalString(realNick, oldNick) {
+		resp.
+			WriteData(strconv.Itoa(realPID), realNick, strconv.Itoa(oldPID), asp.Timestamp()).
+			WriteHeader("result").
+			WriteData("InvalidReportedNick")
 	} else {
 		// Currently unused as realNick differs from oldNick for any non-ok response
 		// Primarily here for completeness-sake
-		resp.WriteData("InvalidReportedProfileID")
+		resp.
+			WriteData(strconv.Itoa(realPID), realNick, strconv.Itoa(oldPID), asp.Timestamp()).
+			WriteHeader("result").
+			WriteData("InvalidReportedProfileID")
 	}
 
 	return resp
