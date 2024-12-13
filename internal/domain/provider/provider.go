@@ -68,6 +68,17 @@ func (p Provider) RequiresGameSpyHost() bool {
 }
 
 //goland:noinspection GoMixedReceiverTypes
+func (p Provider) RequiresBFHQInfoQuery() bool {
+	switch p {
+	// BF2Hub only returns player info if the info query parameter matches the one used for the in-game BFHQ
+	case ProviderBF2Hub:
+		return true
+	default:
+		return false
+	}
+}
+
+//goland:noinspection GoMixedReceiverTypes
 func (p Provider) SupportsPlayerVerification() bool {
 	switch p {
 	case ProviderPlayBF2, ProviderOpenSpy, ProviderB2BF2:

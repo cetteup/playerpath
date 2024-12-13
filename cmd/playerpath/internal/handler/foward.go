@@ -56,17 +56,12 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 		return err
 	}
 
-	// Use GameSpy host value only if provider requires it
+	// Make any required provider-specific modifications to the outgoing request
 	if pv.RequiresGameSpyHost() {
-		switch u.Path {
-		// Yes, BF2Hub really *requires* different host headers for these endpoints
-		case "/ASP/getrankstatus.aspx":
-			req.Host = "battlefield2.gamestats.gamespy.com"
-		case "/ASP/sendsnapshot.aspx":
-			req.Host = "gamestats.gamespy.com"
-		default:
-			req.Host = "BF2Web.gamespy.com"
-		}
+		HostModifier(req)
+	}
+	if pv.RequiresBFHQInfoQuery() {
+		QueryModifier(req)
 	}
 
 	// Copy downstream user agent to ensure compatibility
