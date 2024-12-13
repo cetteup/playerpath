@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/go-playground/validator/v10 v10.22.1
+	github.com/go-playground/validator/v10 v10.23.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/labstack/echo/v4 v4.13.2
 	github.com/rs/zerolog v1.33.0
