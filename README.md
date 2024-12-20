@@ -66,3 +66,11 @@ When a player joins a Battlefield 2 server, the server makes several HTTP reques
 playerpath solves this by dynamically forwarding the requests to the player's provider. The respective provider is determined based on data from [bf2opendata](https://github.com/art567/bf2opendata), which contains player information from all major Battlefield 2 providers (currently BF2Hub, PlayBF2, OpenSpy and B2BF2). Thanks to this additional information, the requests which would have been sent to BF2Hub are sent to PlayBF2 instead, which is able to provide the required details for the player.
 
 While playerpath enables servers to _retrieve_ player information, it does **not** support sending post-round statistics snapshots to multiple providers. Snapshots are only forwarded to the configured default provider.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d2a01453-55d7-4679-b7f5-cb4c31be74f5">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/8d25686d-d986-41f7-a965-51cdb4330187">
+  <img src="https://github.com/user-attachments/assets/8d25686d-d986-41f7-a965-51cdb4330187">
+</picture>
+
+
