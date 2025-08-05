@@ -2,7 +2,7 @@ module github.com/cetteup/playerpath
 
 go 1.21.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
