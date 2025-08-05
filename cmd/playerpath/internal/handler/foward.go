@@ -64,8 +64,21 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 		QueryModifier(req)
 	}
 
-	// Copy downstream user agent to ensure compatibility
-	req.Header.Set("User-Agent", c.Request().Header.Get("User-Agent"))
+	// Copy any relevant downstream headers
+	for key, values := range c.Request().Header {
+		if shouldCopyHeader(key) {
+			for i, value := range values {
+				if i == 0 {
+					// Set rather than add first value to ensure we overwrite any default values
+					req.Header.Set(key, value)
+				} else {
+					req.Header.Add(key, value)
+				}
+			}
+		}
+	}
+
+	// Add proxy headers
 	req.Header.Set("X-Forwarded-Proto", c.Request().Proto)
 	req.Header.Set("X-Forwarded-For", c.RealIP())
 	req.Header.Set("X-Real-IP", c.RealIP())
@@ -91,4 +104,18 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 	}
 
 	return c.String(res.StatusCode, string(bytes))
+}
+
+func shouldCopyHeader(key string) bool {
+	// Keys *must* use canonical header format
+	switch key {
+	case "User-Agent":
+		// Copy downstream user agent to ensure compatibility
+		return true
+	case "X-Bf2hub-Tsdata":
+		// Copy BF2Hub snapshot header (snapshots sent without are flagged and not processed)
+		return true
+	default:
+		return false
+	}
 }
