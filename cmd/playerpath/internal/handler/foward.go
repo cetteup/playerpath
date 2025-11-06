@@ -83,6 +83,9 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 	req.Header.Set("X-Forwarded-For", c.RealIP())
 	req.Header.Set("X-Real-IP", c.RealIP())
 
+	// Copy content length to avoid chunked encoding
+	req.ContentLength = c.Request().ContentLength
+
 	log.Debug().
 		Stringer(trace.LogProvider, pv).
 		Str("URI", c.Request().RequestURI).
