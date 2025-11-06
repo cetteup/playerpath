@@ -30,6 +30,9 @@ func NewHandler(repository repository, servers map[string]provider.Provider, pro
 		servers:    servers,
 		provider:   provider,
 		client: &http.Client{
+			Transport: &http.Transport{
+				DisableCompression: true,
+			},
 			// Don't follow redirects, just return first response (mimic proxy behaviour)
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
