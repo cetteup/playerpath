@@ -33,7 +33,7 @@ jobs:
         goarch: [ amd64 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: wangyoucao577/go-release-action@v1.53
         with:
@@ -56,7 +56,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Log in to the container registry
         uses: docker/login-action@v3
