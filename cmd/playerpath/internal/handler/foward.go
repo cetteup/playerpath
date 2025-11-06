@@ -112,6 +112,8 @@ func shouldCopyHeader(key string) bool {
 	case "User-Agent":
 		// Copy downstream user agent to ensure compatibility
 		return true
+	case "Content-Type":
+		return true
 	case "X-Bf2hub-Tsdata":
 		// Copy BF2Hub snapshot header (snapshots sent without are flagged and not processed)
 		return true
