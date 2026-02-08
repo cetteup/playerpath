@@ -123,9 +123,5 @@ func main() {
 	// Fallback forward to default provider
 	asp.Any("/*.aspx", h.HandleStaticForward)
 
-	// API routes
-	api := e.Group("/api")
-	api.GET("/player/:pid", h.HandleGetPlayer)
-
 	e.Logger.Fatal(e.Start(opts.ListenAddr))
 }
