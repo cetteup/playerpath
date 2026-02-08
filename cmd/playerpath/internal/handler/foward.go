@@ -34,6 +34,9 @@ func (h *Handler) HandleDynamicForward(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}
 
+	// Only used for request logging
+	c.Set("provider", pv)
+
 	return h.handleForward(c, pv)
 }
 

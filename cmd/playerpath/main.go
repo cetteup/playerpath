@@ -106,6 +106,7 @@ func main() {
 				Int("status", v.Status).
 				Str("latency", v.Latency.Truncate(time.Millisecond).String()).
 				Str("agent", v.UserAgent).
+				Any("provider", c.Get("provider")).
 				Msg("request")
 
 			return nil
