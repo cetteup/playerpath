@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/cetteup/playerpath/cmd/playerpath/modify"
+	"github.com/cetteup/playerpath/cmd/playerpath/internal/modify"
 	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/trace"

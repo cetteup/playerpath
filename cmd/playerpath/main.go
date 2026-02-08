@@ -12,8 +12,8 @@ import (
 
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/config"
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/handler"
+	"github.com/cetteup/playerpath/cmd/playerpath/internal/modify"
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/options"
-	"github.com/cetteup/playerpath/cmd/playerpath/modify"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
 	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/sqlutil"
