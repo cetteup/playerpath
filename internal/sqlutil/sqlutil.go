@@ -26,7 +26,6 @@ func Connect(host, dbname, user, passwd string) *sql.DB {
 		panic(err)
 	}
 
-	db.SetConnMaxLifetime(time.Minute * 3)
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
