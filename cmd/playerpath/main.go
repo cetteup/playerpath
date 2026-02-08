@@ -13,6 +13,7 @@ import (
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/config"
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/handler"
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/options"
+	"github.com/cetteup/playerpath/cmd/playerpath/modify"
 	"github.com/cetteup/playerpath/internal/database"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
 	"github.com/cetteup/playerpath/internal/domain/provider"
@@ -75,6 +76,11 @@ func main() {
 
 	repository := sql.NewRepository(db)
 	h := handler.NewHandler(repository, servers, opts.Provider)
+	h.WithModifier(
+		modify.HostRequestModifier{},
+		modify.InfoQueryRequestModifier{},
+		modify.VerificationResponseModifier{},
+	)
 
 	e := echo.New()
 	e.HideBanner = true
@@ -112,8 +118,7 @@ func main() {
 	asp.GET("/getawardsinfo.aspx", h.HandleDynamicForward)
 	asp.GET("/getunlocksinfo.aspx", h.HandleDynamicForward)
 	asp.GET("/getrankinfo.aspx", h.HandleDynamicForward)
-	// Requests with special/split handling
-	asp.GET("/VerifyPlayer.aspx", h.HandleGetVerifyPlayer)
+	asp.GET("/VerifyPlayer.aspx", h.HandleDynamicForward)
 	// Fallback forward to default provider
 	asp.Any("/*.aspx", h.HandleStaticForward)
 

@@ -41,65 +41,6 @@ func (p Provider) String() string {
 }
 
 //goland:noinspection GoMixedReceiverTypes
-func (p Provider) BaseURL() string {
-	switch p {
-	case ProviderBF2Hub:
-		return baseURLBF2Hub
-	case ProviderPlayBF2:
-		return baseURLPlayBF2
-	case ProviderOpenSpy:
-		return baseURLOpenSpy
-	case ProviderB2BF2:
-		return baseURLB2BF2
-	default:
-		return "http://unknown"
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (p Provider) RequiresGameSpyHost() bool {
-	switch p {
-	// BF2Hub only serves ASP requests with original gamespy.com host headers
-	case ProviderBF2Hub:
-		return true
-	default:
-		return false
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (p Provider) RequiresBFHQInfoQuery() bool {
-	switch p {
-	// BF2Hub only returns player info if the info query parameter matches the one used for the in-game BFHQ
-	case ProviderBF2Hub:
-		return true
-	default:
-		return false
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (p Provider) SupportsPlayerVerification() bool {
-	switch p {
-	case ProviderPlayBF2, ProviderOpenSpy, ProviderB2BF2:
-		return true
-	default:
-		return false
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (p Provider) AllowsCaseInsensitiveLogin() bool {
-	switch p {
-	// BF2Hub allows players to log in with any spelling/casing of their name
-	case ProviderBF2Hub:
-		return true
-	default:
-		return false
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
 func (p *Provider) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
 		*p = ProviderUnknown
@@ -126,4 +67,58 @@ func (p *Provider) UnmarshalText(text []byte) error {
 //goland:noinspection GoMixedReceiverTypes
 func (p Provider) MarshalText() (text []byte, err error) {
 	return []byte(p.String()), nil
+}
+
+func GetBaseURL(p Provider) string {
+	switch p {
+	case ProviderBF2Hub:
+		return baseURLBF2Hub
+	case ProviderPlayBF2:
+		return baseURLPlayBF2
+	case ProviderOpenSpy:
+		return baseURLOpenSpy
+	case ProviderB2BF2:
+		return baseURLB2BF2
+	default:
+		return "http://unknown"
+	}
+}
+
+func RequiresGameSpyHost(p Provider) bool {
+	switch p {
+	// BF2Hub only serves ASP requests with original gamespy.com host headers
+	case ProviderBF2Hub:
+		return true
+	default:
+		return false
+	}
+}
+
+func RequiresBFHQInfoQuery(p Provider) bool {
+	switch p {
+	// BF2Hub only returns player info if the info query parameter matches the one used for the in-game BFHQ
+	case ProviderBF2Hub:
+		return true
+	default:
+		return false
+	}
+}
+
+func SupportsStandardPlayerVerification(p Provider) bool {
+	switch p {
+	case ProviderPlayBF2, ProviderOpenSpy, ProviderB2BF2:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllowsCaseInsensitiveLogin(p Provider) bool {
+	switch p {
+	// BF2Hub allows players to log in with any spelling/casing of their name
+	case ProviderBF2Hub:
+		return true
+	default:
+		return false
+	}
 }

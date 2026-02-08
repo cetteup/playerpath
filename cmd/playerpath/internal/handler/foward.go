@@ -44,7 +44,7 @@ func (h *Handler) HandleStaticForward(c echo.Context) error {
 }
 
 func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
-	u, err := url.Parse(pv.BaseURL())
+	u, err := url.Parse(provider.GetBaseURL(pv))
 	if err != nil {
 		return err
 	}
@@ -56,12 +56,11 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 		return err
 	}
 
-	// Make any required provider-specific modifications to the outgoing request
-	if pv.RequiresGameSpyHost() {
-		HostModifier(req)
-	}
-	if pv.RequiresBFHQInfoQuery() {
-		QueryModifier(req)
+	// Make any required modifications to the outgoing request
+	for _, modifier := range h.modifiers.request {
+		if err = modifier.Modify(pv, req); err != nil {
+			return err
+		}
 	}
 
 	// Copy any relevant downstream headers
@@ -95,13 +94,16 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
-	bytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
+	// Make any required modifications to the incoming response
+	for _, modifier := range h.modifiers.response {
+		if err = modifier.Modify(pv, res); err != nil {
+			return err
+		}
 	}
 
-	err = res.Body.Close()
+	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}

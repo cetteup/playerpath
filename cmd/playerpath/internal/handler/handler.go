@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/cetteup/playerpath/cmd/playerpath/modify"
 	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/provider"
 	"github.com/cetteup/playerpath/internal/trace"
@@ -20,6 +21,11 @@ type Handler struct {
 	repository repository
 	servers    map[string]provider.Provider
 	provider   provider.Provider
+
+	modifiers struct {
+		request  []modify.RequestModifier
+		response []modify.ResponseModifier
+	}
 
 	client *http.Client
 }
@@ -38,6 +44,24 @@ func NewHandler(repository repository, servers map[string]provider.Provider, pro
 				return http.ErrUseLastResponse
 			},
 		},
+	}
+}
+
+func (h *Handler) WithModifier(modifiers ...modify.Modifier) {
+	for _, modifier := range modifiers {
+		if modifier.Type() == modify.ModifierTypeRequest {
+			m, ok := modifier.(modify.RequestModifier)
+			if ok {
+				h.modifiers.request = append(h.modifiers.request, m)
+			}
+		}
+
+		if modifier.Type() == modify.ModifierTypeResponse {
+			m, ok := modifier.(modify.ResponseModifier)
+			if ok {
+				h.modifiers.response = append(h.modifiers.response, m)
+			}
+		}
 	}
 }
 
