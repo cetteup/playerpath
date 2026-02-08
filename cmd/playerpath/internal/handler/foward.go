@@ -22,14 +22,14 @@ type UpstreamResponse struct {
 // HandleDynamicForward Handle requests that are forwarded on a per-player basis.
 // Dynamic meaning that two requests from a single server for two different players may be forwarded to different providers.
 func (h *Handler) HandleDynamicForward(c echo.Context) error {
-	p := struct {
+	params := struct {
 		PID int `query:"pid"`
 	}{}
-	if err := c.Bind(&p); err != nil {
+	if err := c.Bind(&params); err != nil {
 		return c.String(http.StatusOK, asp.NewSyntaxErrorResponse().Serialize())
 	}
 
-	pv, err := h.determineProvider(c.Request().Context(), p.PID, c.RealIP())
+	pv, err := h.determineProvider(c.Request().Context(), params.PID, c.RealIP())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}
