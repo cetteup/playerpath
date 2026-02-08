@@ -26,8 +26,8 @@ func Connect(host, dbname, user, passwd string) *sql.DB {
 		panic(err)
 	}
 
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(2)
+	db.SetMaxIdleConns(2)
 
 	return db
 }
