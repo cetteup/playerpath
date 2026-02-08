@@ -17,10 +17,10 @@ import (
 	"github.com/cetteup/playerpath/cmd/importer/internal/config"
 	"github.com/cetteup/playerpath/cmd/importer/internal/opendata"
 	"github.com/cetteup/playerpath/cmd/importer/internal/options"
-	"github.com/cetteup/playerpath/internal/database"
 	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
 	"github.com/cetteup/playerpath/internal/domain/provider"
+	"github.com/cetteup/playerpath/internal/sqlutil"
 	"github.com/cetteup/playerpath/internal/trace"
 )
 
@@ -62,7 +62,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	db := database.Connect(
+	db := sqlutil.Connect(
 		cfg.Database.Hostname,
 		cfg.Database.DatabaseName,
 		cfg.Database.Username,

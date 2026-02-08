@@ -14,9 +14,9 @@ import (
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/handler"
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/options"
 	"github.com/cetteup/playerpath/cmd/playerpath/modify"
-	"github.com/cetteup/playerpath/internal/database"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
 	"github.com/cetteup/playerpath/internal/domain/provider"
+	"github.com/cetteup/playerpath/internal/sqlutil"
 )
 
 var (
@@ -54,7 +54,7 @@ func main() {
 			Msg("Failed to read config file")
 	}
 
-	db := database.Connect(
+	db := sqlutil.Connect(
 		cfg.Database.Hostname,
 		cfg.Database.DatabaseName,
 		cfg.Database.Username,
