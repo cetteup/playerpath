@@ -35,7 +35,7 @@ func (m VerificationResponseModifier) Modify(pv provider.Provider, res *http.Res
 		return nil
 	}
 
-	if pv == provider.ProviderBF2Hub {
+	if pv == provider.BF2Hub {
 		resp, err2 := transformBF2HubPlayerVerificationResult(pid, nick, string(body))
 		if err2 != nil {
 			return err2

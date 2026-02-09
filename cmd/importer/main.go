@@ -104,12 +104,7 @@ type Source interface {
 }
 
 func load(ctx context.Context, source Source, repository player.Repository, batchSize int) error {
-	var providers = []provider.Provider{
-		provider.ProviderBF2Hub,
-		provider.ProviderPlayBF2,
-		provider.ProviderOpenSpy,
-		provider.ProviderB2BF2,
-	}
+	providers := []provider.Provider{provider.BF2Hub, provider.PlayBF2, provider.OpenSpy, provider.B2BF2}
 	for _, pv := range providers {
 		stats := struct {
 			processed int

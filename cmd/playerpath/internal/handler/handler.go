@@ -69,14 +69,14 @@ func (h *Handler) determineProvider(ctx context.Context, pid int, serverIP strin
 	// Primarily determine provider based on player
 	pv, err := h.getPlayerProvider(ctx, pid)
 	if err != nil {
-		return provider.ProviderUnknown, err
-	} else if pv != provider.ProviderUnknown {
+		return provider.Unknown, err
+	} else if pv != provider.Unknown {
 		return pv, nil
 	}
 
 	// Alternative use server's default provider
 	pv = h.getServerProvider(serverIP)
-	if pv != provider.ProviderUnknown {
+	if pv != provider.Unknown {
 		return pv, nil
 	}
 
@@ -91,15 +91,15 @@ func (h *Handler) getPlayerProvider(ctx context.Context, pid int) (provider.Prov
 			log.Warn().
 				Int(trace.LogPlayerPID, pid).
 				Msg("Player not found, deferring provider selection")
-			return provider.ProviderUnknown, nil
+			return provider.Unknown, nil
 		}
 		if errors.Is(err, player.ErrMultiplePlayersFound) {
 			log.Warn().
 				Int(trace.LogPlayerPID, pid).
 				Msg("Found multiple players, deferring provider selection")
-			return provider.ProviderUnknown, nil
+			return provider.Unknown, nil
 		}
-		return provider.ProviderUnknown, err
+		return provider.Unknown, err
 	}
 
 	return p.Provider, nil
@@ -115,7 +115,7 @@ func (h *Handler) getServerProvider(ip string) provider.Provider {
 				Str("ip", ip).
 				Msg("Server not configured, deferring provider selection")
 		}
-		return provider.ProviderUnknown
+		return provider.Unknown
 	}
 
 	return pv
@@ -123,7 +123,7 @@ func (h *Handler) getServerProvider(ip string) provider.Provider {
 
 func (h *Handler) getServerOrDefaultProvider(ip string) provider.Provider {
 	pv := h.getServerProvider(ip)
-	if pv != provider.ProviderUnknown {
+	if pv != provider.Unknown {
 		return pv
 	}
 

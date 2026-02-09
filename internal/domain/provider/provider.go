@@ -1,22 +1,19 @@
+//go:generate go tool stringer -type=Provider
 package provider
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Provider int
 
 const (
-	ProviderUnknown Provider = 0
-	ProviderBF2Hub  Provider = 1
-	ProviderPlayBF2 Provider = 2
-	ProviderOpenSpy Provider = 3
-	ProviderB2BF2   Provider = 4
-
-	providerNameBF2Hub  = "bf2hub"
-	providerNamePlayBF2 = "playbf2"
-	providerNameOpenSpy = "openspy"
-	providerNameB2BF2   = "b2bf2"
+	Unknown Provider = 0
+	BF2Hub  Provider = 1
+	PlayBF2 Provider = 2
+	OpenSpy Provider = 3
+	B2BF2   Provider = 4
 
 	baseURLBF2Hub  = "http://official.ranking.bf2hub.com/"
 	baseURLPlayBF2 = "http://bf2web.playbf2.ru/"
@@ -25,39 +22,22 @@ const (
 )
 
 //goland:noinspection GoMixedReceiverTypes
-func (p Provider) String() string {
-	switch p {
-	case ProviderBF2Hub:
-		return providerNameBF2Hub
-	case ProviderPlayBF2:
-		return providerNamePlayBF2
-	case ProviderOpenSpy:
-		return providerNameOpenSpy
-	case ProviderB2BF2:
-		return providerNameB2BF2
-	default:
-		return "unknown"
-	}
-}
-
-//goland:noinspection GoMixedReceiverTypes
 func (p *Provider) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
-		*p = ProviderUnknown
+		*p = Unknown
 		return nil
 	}
 
 	s := string(text)
-	switch s {
-	case providerNameBF2Hub:
-		*p = ProviderBF2Hub
-	case providerNamePlayBF2:
-		*p = ProviderPlayBF2
-	case providerNameOpenSpy:
-		*p = ProviderOpenSpy
-	case providerNameB2BF2:
-		*p = ProviderB2BF2
-	default:
+	if strings.EqualFold(s, BF2Hub.String()) {
+		*p = BF2Hub
+	} else if strings.EqualFold(s, PlayBF2.String()) {
+		*p = PlayBF2
+	} else if strings.EqualFold(s, OpenSpy.String()) {
+		*p = OpenSpy
+	} else if strings.EqualFold(s, B2BF2.String()) {
+		*p = B2BF2
+	} else {
 		return fmt.Errorf("invalid provider: %s", s)
 	}
 
@@ -71,13 +51,13 @@ func (p Provider) MarshalText() (text []byte, err error) {
 
 func GetBaseURL(p Provider) string {
 	switch p {
-	case ProviderBF2Hub:
+	case BF2Hub:
 		return baseURLBF2Hub
-	case ProviderPlayBF2:
+	case PlayBF2:
 		return baseURLPlayBF2
-	case ProviderOpenSpy:
+	case OpenSpy:
 		return baseURLOpenSpy
-	case ProviderB2BF2:
+	case B2BF2:
 		return baseURLB2BF2
 	default:
 		return "http://unknown"
@@ -87,7 +67,7 @@ func GetBaseURL(p Provider) string {
 func RequiresGameSpyHost(p Provider) bool {
 	switch p {
 	// BF2Hub only serves ASP requests with original gamespy.com host headers
-	case ProviderBF2Hub:
+	case BF2Hub:
 		return true
 	default:
 		return false
@@ -97,7 +77,7 @@ func RequiresGameSpyHost(p Provider) bool {
 func RequiresBFHQInfoQuery(p Provider) bool {
 	switch p {
 	// BF2Hub only returns player info if the info query parameter matches the one used for the in-game BFHQ
-	case ProviderBF2Hub:
+	case BF2Hub:
 		return true
 	default:
 		return false
@@ -106,7 +86,7 @@ func RequiresBFHQInfoQuery(p Provider) bool {
 
 func SupportsStandardPlayerVerification(p Provider) bool {
 	switch p {
-	case ProviderPlayBF2, ProviderOpenSpy, ProviderB2BF2:
+	case PlayBF2, OpenSpy, B2BF2:
 		return true
 	default:
 		return false
@@ -116,7 +96,7 @@ func SupportsStandardPlayerVerification(p Provider) bool {
 func AllowsCaseInsensitiveLogin(p Provider) bool {
 	switch p {
 	// BF2Hub allows players to log in with any spelling/casing of their name
-	case ProviderBF2Hub:
+	case BF2Hub:
 		return true
 	default:
 		return false
