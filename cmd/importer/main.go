@@ -89,11 +89,13 @@ func main() {
 		log.Fatal().Msg("Source must be a valid URL or a directory path")
 	}
 
+	log.Info().Msgf("Importing players from %s", opts.Source)
+
 	err = load(ctx, source, repository, opts.BatchSize)
 	if err != nil {
 		log.Fatal().
 			Err(err).
-			Msg("Failed to import players from bf2opendata")
+			Msgf("Failed to import players from %s", opts.Source)
 	}
 }
 
