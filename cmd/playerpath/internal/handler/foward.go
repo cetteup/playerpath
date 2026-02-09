@@ -43,7 +43,12 @@ func (h *Handler) HandleDynamicForward(c echo.Context) error {
 // HandleStaticForward Handle requests that are forwarded on a per-server basis.
 // Static only in the sense that any request from a given server will be forwarded to the same provider.
 func (h *Handler) HandleStaticForward(c echo.Context) error {
-	return h.handleForward(c, h.getServerOrDefaultProvider(c.RealIP()))
+	pv := h.getServerOrDefaultProvider(c.RealIP())
+
+	// Only used for request logging
+	c.Set("provider", pv)
+
+	return h.handleForward(c, pv)
 }
 
 func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
