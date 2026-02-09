@@ -4,9 +4,9 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"slices"
 	"syscall"
 	"time"
@@ -17,6 +17,7 @@ import (
 	"github.com/cetteup/playerpath/cmd/importer/internal/config"
 	"github.com/cetteup/playerpath/cmd/importer/internal/opendata"
 	"github.com/cetteup/playerpath/cmd/importer/internal/options"
+	"github.com/cetteup/playerpath/cmd/importer/internal/registry"
 	"github.com/cetteup/playerpath/internal/domain/player"
 	"github.com/cetteup/playerpath/internal/domain/player/sql"
 	"github.com/cetteup/playerpath/internal/domain/provider"
@@ -79,7 +80,16 @@ func main() {
 
 	repository := sql.NewRepository(db)
 
-	err = load(ctx, repository, opts.OpendataPath, opts.BatchSize)
+	var source Source
+	if isUsableURL(opts.Source) {
+		source = registry.NewClient(opts.Source, 10*time.Second)
+	} else if isDirPath(opts.Source) {
+		source = opendata.NewLoader(opts.Source)
+	} else {
+		log.Fatal().Msg("Source must be a valid URL or a directory path")
+	}
+
+	err = load(ctx, source, repository, opts.BatchSize)
 	if err != nil {
 		log.Fatal().
 			Err(err).
@@ -87,7 +97,11 @@ func main() {
 	}
 }
 
-func load(ctx context.Context, repository player.Repository, basePath string, batchSize int) error {
+type Source interface {
+	GetPlayers(ctx context.Context, provider string, cb func(ctx context.Context, pid int, nick string) error) error
+}
+
+func load(ctx context.Context, source Source, repository player.Repository, batchSize int) error {
 	var providers = []provider.Provider{
 		provider.ProviderBF2Hub,
 		provider.ProviderPlayBF2,
@@ -101,13 +115,13 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 			added     int
 			updated   int
 		}{}
-		name := path.Join(basePath, fmt.Sprintf("v_%s.dat", pv.String()))
+
 		batch := make([]player.Player, 0, batchSize)
-		err := opendata.LoadPlayersFromFile(ctx, name, func(ctx context.Context, p opendata.Player) error {
+		err := source.GetPlayers(ctx, pv.String(), func(ctx context.Context, pid int, nick string) error {
 			stats.processed++
 			batch = append(batch, player.Player{
-				PID:      p.PID,
-				Nick:     p.Nick,
+				PID:      pid,
+				Nick:     nick,
 				Provider: pv,
 				Imported: time.Now().UTC(),
 			})
@@ -117,9 +131,11 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 				if err2 != nil {
 					return err2
 				}
+
 				stats.imported += added + updated
 				stats.added += added
 				stats.updated += updated
+
 				batch = batch[:0]
 			}
 
@@ -135,6 +151,7 @@ func load(ctx context.Context, repository player.Repository, basePath string, ba
 			if err2 != nil {
 				return err2
 			}
+
 			stats.imported += added + updated
 			stats.added += added
 			stats.updated += updated
@@ -212,4 +229,14 @@ func upsert(ctx context.Context, repository player.Repository, pv provider.Provi
 	}
 
 	return len(insert), len(update), nil
+}
+
+func isUsableURL(s string) bool {
+	u, err := url.Parse(s)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+}
+
+func isDirPath(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }

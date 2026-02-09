@@ -97,7 +97,7 @@ func (h *Handler) handleForward(c echo.Context, pv provider.Provider) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	// Make any required modifications to the incoming response
 	for _, modifier := range h.modifiers.response {
