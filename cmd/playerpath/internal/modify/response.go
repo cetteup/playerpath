@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/cetteup/playerpath/cmd/playerpath/internal/asp"
 	"github.com/cetteup/playerpath/internal/domain/provider"
+)
+
+const (
+	dummyPID = 0
 )
 
 type VerificationResponseModifier struct{}
@@ -92,7 +97,7 @@ func transformBF2HubPlayerVerificationResult(pid, nick, result string) (*asp.Res
 		// We cannot know whether the auth was invalid or the pid/nick did not match
 		// The result is simply used to indicate "there is no session with this combination of pid, nick and auth"
 		resp.
-			WriteData(pid, addInvalidPrefix(nick), pid, asp.Timestamp()).
+			WriteData(strconv.Itoa(dummyPID), addInvalidPrefix(nick), pid, asp.Timestamp()).
 			WriteHeader("result").
 			WriteData("InvalidAuthProfileID")
 	}
