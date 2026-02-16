@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -31,7 +32,7 @@ func (m VerificationResponseModifier) Modify(pv provider.Provider, res *http.Res
 		return err
 	}
 
-	q := res.Request.URL.Query()
+	q := parseQuery(res.Request.URL.RawQuery)
 	pid := q.Get("pid")
 	nick := q.Get("SoldierNick")
 
@@ -70,6 +71,17 @@ func (m VerificationResponseModifier) skip(pv provider.Provider, res *http.Respo
 	}
 
 	return false
+}
+
+// parseQuery Simplified version of url.ParseQuery that does not unescape query parameters
+func parseQuery(query string) url.Values {
+	values := make(url.Values)
+	for q := range strings.SplitSeq(query, "&") {
+		key, value, _ := strings.Cut(q, "=")
+		values[key] = append(values[key], value)
+	}
+
+	return values
 }
 
 func transformBF2HubPlayerVerificationResult(pid, nick, result string) (*asp.Response, error) {
