@@ -45,25 +45,25 @@ func (r *Response) write(lineType string, elems ...string) *Response {
 }
 
 func (r *Response) Serialize() string {
-	serialized := ""
+	var serialized strings.Builder
 	size := 0
 	for _, line := range r.lines {
 		for j, elem := range line {
-			serialized += elem
+			serialized.WriteString(elem)
 			if j+1 < len(line) {
-				serialized += delimiter
+				serialized.WriteString(delimiter)
 			}
 			// Cannot use len(elem) here, since it counts bytes not characters
 			size += len([]rune(elem))
 		}
 
 		// Still need to append the line indicating the size, so add linebreak for every line
-		serialized += linebreak
+		serialized.WriteString(linebreak)
 	}
 
-	serialized += strings.Join([]string{"$", strconv.Itoa(size), "$"}, delimiter)
+	serialized.WriteString(strings.Join([]string{"$", strconv.Itoa(size), "$"}, delimiter))
 
-	return serialized
+	return serialized.String()
 }
 
 func NewSyntaxErrorResponse() *Response {
