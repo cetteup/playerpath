@@ -32,7 +32,7 @@ func (m VerificationResponseModifier) Modify(pv provider.Provider, res *http.Res
 		return err
 	}
 
-	q := parseQuery(res.Request.URL.RawQuery)
+	q := parseVerifyPlayersQuery(res.Request.URL.RawQuery)
 	pid := q.Get("pid")
 	nick := q.Get("SoldierNick")
 
@@ -73,15 +73,40 @@ func (m VerificationResponseModifier) skip(pv provider.Provider, res *http.Respo
 	return false
 }
 
-// parseQuery Simplified version of url.ParseQuery that does not unescape query parameters
-func parseQuery(query string) url.Values {
-	values := make(url.Values)
-	for q := range strings.SplitSeq(query, "&") {
-		key, value, _ := strings.Cut(q, "=")
-		values[key] = append(values[key], value)
+// parseVerifyPlayersQuery Query string parsing specifically for expected parameters of VerifyPlayers.aspx
+func parseVerifyPlayersQuery(query string) url.Values {
+	q := make(url.Values)
+
+	// Battlefield 2 does not query encode any characters whatsoever, not even ones that can be mistaken for syntax
+	// To still be able to parse the query parameters, we look for the specific parameters for this request (in order)
+
+	query, found := strings.CutPrefix(query, "auth=")
+	if !found {
+		return nil
 	}
 
-	return values
+	auth, query, found := strings.Cut(query, "&SoldierNick=")
+	if !found {
+		return nil
+	}
+
+	nick, pid, found := strings.Cut(query, "&pid=")
+	if !found {
+		return nil
+	}
+
+	// pid may only contain decimal digits ([0-9])
+	if strings.ContainsFunc(pid, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) {
+		return nil
+	}
+
+	q.Set("auth", auth)
+	q.Set("SoldierNick", nick)
+	q.Set("pid", pid)
+
+	return q
 }
 
 func transformBF2HubPlayerVerificationResult(pid, nick, result string) (*asp.Response, error) {

@@ -17,6 +17,10 @@ const (
 	linebreak = "\n"
 )
 
+var (
+	Now = time.Now // mockable for tests
+)
+
 type Response struct {
 	lines [][]string
 }
@@ -73,5 +77,5 @@ func NewSyntaxErrorResponse() *Response {
 }
 
 func Timestamp() string {
-	return strconv.FormatInt(time.Now().Unix(), 10)
+	return strconv.FormatInt(Now().Unix(), 10)
 }
