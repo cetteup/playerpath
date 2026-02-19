@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -61,7 +62,7 @@ func (c *Client) GetPlayers(ctx context.Context, provider string, cb func(ctx co
 	u = u.JoinPath("players")
 
 	q := u.Query()
-	q.Set("provider", provider)
+	q.Set("provider", strings.ToLower(provider))
 	q.Set("perPage", strconv.Itoa(pageSize))
 	u.RawQuery = q.Encode()
 

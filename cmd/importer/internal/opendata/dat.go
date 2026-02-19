@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Loader struct {
@@ -19,7 +20,7 @@ func NewLoader(basePath string) *Loader {
 }
 
 func (l *Loader) GetPlayers(ctx context.Context, provider string, cb func(ctx context.Context, pid int, nick string) error) error {
-	file, err := os.Open(filepath.Join(l.basePath, fmt.Sprintf("v_%s.dat", provider)))
+	file, err := os.Open(filepath.Join(l.basePath, fmt.Sprintf("v_%s.dat", strings.ToLower(provider))))
 	if err != nil {
 		return err
 	}
