@@ -1,0 +1,54 @@
+services:
+  playerpath:
+    image: ghcr.io/cetteup/playerpath
+    restart: unless-stopped
+
+    command: ["/playerpath"]
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - ./config.example.yaml:/config.yaml
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  importer:
+    image: ghcr.io/cetteup/playerpath
+    restart: unless-stopped
+
+    command: ["/importer"]
+
+    volumes:
+      - ./config.example.yaml:/config.yaml
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:lts
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: your-secure-root-password
+      MYSQL_DATABASE: playerpath
+      MYSQL_USER: playerpath
+      MYSQL_PASSWORD: your-secure-user-password
+
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./providers.sql:/docker-entrypoint-initdb.d/2.sql
+
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mysql:
