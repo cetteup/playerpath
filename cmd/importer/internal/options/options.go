@@ -25,7 +25,7 @@ func Init() *Options {
 	flag.BoolVar(&opts.ColorizeLogs, "colorize-logs", false, "colorize log messages")
 	flag.StringVar(&opts.ConfigPath, "config", "config.yaml", "path to YAML config file")
 	flag.DurationVar(&opts.Interval, "interval", 5*time.Minute, "interval for importing players")
-	flag.IntVar(&opts.BatchSize, "batch", 1024, "number of players to batch-upsert to database")
+	flag.IntVar(&opts.BatchSize, "batch", 1000, "number of players to batch-upsert to database")
 	flag.Parse()
 	return opts
 }
