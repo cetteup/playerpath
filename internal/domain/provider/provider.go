@@ -98,13 +98,3 @@ func SupportsStandardPlayerVerification(p Provider) bool {
 		return false
 	}
 }
-
-func AllowsCaseInsensitiveLogin(p Provider) bool {
-	switch p {
-	// BF2Hub allows players to log in with any spelling/casing of their name
-	case BF2Hub:
-		return true
-	default:
-		return false
-	}
-}
