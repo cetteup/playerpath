@@ -86,6 +86,7 @@ func main() {
 			provider.PlayBF2,
 			provider.OpenSpy,
 			provider.B2BF2,
+			provider.Gameppy,
 		},
 		opts.BatchSize,
 	)

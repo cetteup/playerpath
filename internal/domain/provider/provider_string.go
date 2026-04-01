@@ -13,11 +13,12 @@ func _() {
 	_ = x[PlayBF2-2]
 	_ = x[OpenSpy-3]
 	_ = x[B2BF2-4]
+	_ = x[Gameppy-5]
 }
 
-const _Provider_name = "UnknownBF2HubPlayBF2OpenSpyB2BF2"
+const _Provider_name = "UnknownBF2HubPlayBF2OpenSpyB2BF2Gameppy"
 
-var _Provider_index = [...]uint8{0, 7, 13, 20, 27, 32}
+var _Provider_index = [...]uint8{0, 7, 13, 20, 27, 32, 39}
 
 func (i Provider) String() string {
 	idx := int(i) - 0

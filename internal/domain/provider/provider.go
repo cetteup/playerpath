@@ -14,11 +14,13 @@ const (
 	PlayBF2 Provider = 2
 	OpenSpy Provider = 3
 	B2BF2   Provider = 4
+	Gameppy Provider = 5
 
 	baseURLBF2Hub  = "http://official.ranking.bf2hub.com/"
 	baseURLPlayBF2 = "http://bf2web.playbf2.ru/"
 	baseURLOpenSpy = "http://bf2web.openspy.net/"
 	baseURLB2BF2   = "https://stats.b2bf2.net/"
+	baseURLGameppy = "http://rank.gameppy.com/"
 )
 
 //goland:noinspection GoMixedReceiverTypes
@@ -37,6 +39,8 @@ func (p *Provider) UnmarshalText(text []byte) error {
 		*p = OpenSpy
 	} else if strings.EqualFold(s, B2BF2.String()) {
 		*p = B2BF2
+	} else if strings.EqualFold(s, Gameppy.String()) {
+		*p = Gameppy
 	} else {
 		return fmt.Errorf("invalid provider: %s", s)
 	}
@@ -59,6 +63,8 @@ func GetBaseURL(p Provider) string {
 		return baseURLOpenSpy
 	case B2BF2:
 		return baseURLB2BF2
+	case Gameppy:
+		return baseURLGameppy
 	default:
 		return "http://unknown"
 	}
