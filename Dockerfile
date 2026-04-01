@@ -24,11 +24,17 @@ RUN go build -v \
     -ldflags="-s -w -X 'main.buildTime=$build_time' -X 'main.buildCommit=$build_commit_sha' -X 'main.buildVersion=$build_version'" \
     /app/src/cmd/playerpath
 
+RUN go build -v \
+    -o /app/bin/importer \
+    -ldflags="-s -w -X 'main.buildTime=$build_time' -X 'main.buildCommit=$build_commit_sha' -X 'main.buildVersion=$build_version'" \
+    /app/src/cmd/importer
+
 FROM gcr.io/distroless/base-debian11
 
 WORKDIR /
 
 COPY --from=build /app/bin/playerpath /playerpath
+COPY --from=build /app/bin/importer /importer
 
 EXPOSE 8080
 

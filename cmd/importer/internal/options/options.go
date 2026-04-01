@@ -2,8 +2,7 @@ package options
 
 import (
 	"flag"
-
-	"github.com/cetteup/playerpath/cmd/importer/internal/registry"
+	"time"
 )
 
 type Options struct {
@@ -13,8 +12,8 @@ type Options struct {
 	ColorizeLogs bool
 
 	ConfigPath string
-	Source     string
 
+	Interval  time.Duration
 	BatchSize int
 }
 
@@ -25,8 +24,8 @@ func Init() *Options {
 	flag.BoolVar(&opts.Debug, "debug", false, "enable debug logging")
 	flag.BoolVar(&opts.ColorizeLogs, "colorize-logs", false, "colorize log messages")
 	flag.StringVar(&opts.ConfigPath, "config", "config.yaml", "path to YAML config file")
-	flag.StringVar(&opts.Source, "source", registry.BaseURL, "bf2.co registry API base URL or path to bf2opendata folder")
-	flag.IntVar(&opts.BatchSize, "batch", 1024, "number of players to read from bf2opendata before upserting batch to database")
+	flag.DurationVar(&opts.Interval, "interval", 5*time.Minute, "interval for importing players")
+	flag.IntVar(&opts.BatchSize, "batch", 1024, "number of players to batch-upsert to database")
 	flag.Parse()
 	return opts
 }

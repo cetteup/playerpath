@@ -13,12 +13,8 @@ import (
 	"github.com/cetteup/playerpath/internal/trace"
 )
 
-type repository interface {
-	FindByPID(ctx context.Context, pid int) (player.Player, error)
-}
-
 type Handler struct {
-	repository repository
+	repository player.Repository
 	servers    map[string]provider.Provider
 	provider   provider.Provider
 
@@ -30,7 +26,7 @@ type Handler struct {
 	client *http.Client
 }
 
-func NewHandler(repository repository, servers map[string]provider.Provider, provider provider.Provider) *Handler {
+func NewHandler(repository player.Repository, servers map[string]provider.Provider, provider provider.Provider) *Handler {
 	return &Handler{
 		repository: repository,
 		servers:    servers,

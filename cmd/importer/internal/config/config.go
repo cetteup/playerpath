@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Database DatabaseConfig `yaml:"db"`
+	RegistryBaseURL string         `yaml:"registry"`
+	Database        DatabaseConfig `yaml:"db"`
 }
 
 type DatabaseConfig struct {

@@ -3,15 +3,12 @@ package sql
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/go-sql-driver/mysql"
-	"github.com/rs/zerolog/log"
 
 	"github.com/cetteup/playerpath/internal/domain/player"
-	"github.com/cetteup/playerpath/internal/domain/provider"
 )
 
 const (
@@ -33,7 +30,7 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
-func (r *Repository) Insert(ctx context.Context, p player.Player) error {
+func (r *Repository) UpsertMany(ctx context.Context, players []player.Player) (int, error) {
 	query := sq.
 		Insert(playerTable).
 		Columns(
@@ -42,34 +39,11 @@ func (r *Repository) Insert(ctx context.Context, p player.Player) error {
 			columnProvider,
 			columnImported,
 		).
-		Values(
-			p.PID,
-			p.Nick,
-			p.Provider,
-			p.Imported,
-		)
-
-	_, err := query.RunWith(r.db).ExecContext(ctx)
-	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return player.ErrPlayerExists
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (r *Repository) InsertMany(ctx context.Context, players []player.Player) error {
-	query := sq.
-		Insert(playerTable).
-		Columns(
-			columnPID,
-			columnNick,
-			columnProvider,
-			columnImported,
-		)
+		// Provider is part of the primary key, meaning there's no way to trigger an update with a different provider
+		// Which is why the provider column not included in the upsert columns
+		Suffix(fmt.Sprintf("ON DUPLICATE KEY UPDATE %s", strings.Join([]string{
+			fmt.Sprintf("%[1]s = VALUES(%[1]s)", columnNick),
+		}, ", ")))
 
 	for _, p := range players {
 		query = query.Values(
@@ -80,55 +54,17 @@ func (r *Repository) InsertMany(ctx context.Context, players []player.Player) er
 		)
 	}
 
-	_, err := query.RunWith(r.db).ExecContext(ctx)
+	result, err := query.RunWith(r.db).ExecContext(ctx)
 	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return player.ErrPlayerExists
-		}
-		return err
+		return 0, err
 	}
 
-	return nil
-}
-
-func (r *Repository) UpdateMany(ctx context.Context, players []player.Player) error {
-	tx, err := r.db.Begin()
+	modified, err := result.RowsAffected()
 	if err != nil {
-		return err
-	}
-	defer func() {
-		err2 := tx.Rollback()
-		if err2 != nil {
-			// Ignore already committed/rolled back error
-			if !errors.Is(err2, sql.ErrTxDone) {
-				log.Error().
-					Err(err2).
-					Msg("Failed to rollback update many players transaction")
-			}
-		}
-	}()
-
-	for _, p := range players {
-		query := sq.
-			Update(playerTable).
-			Set(columnNick, p.Nick).
-			Where(sq.And{
-				sq.Eq{columnPID: p.PID},
-				sq.Eq{columnProvider: p.Provider},
-			})
-
-		_, err2 := query.RunWith(tx).ExecContext(ctx)
-		if err2 != nil {
-			return err2
-		}
+		return 0, err
 	}
 
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return int(modified), nil
 }
 
 func (r *Repository) FindByPID(ctx context.Context, pid int) (player.Player, error) {
@@ -180,49 +116,4 @@ func (r *Repository) FindByPID(ctx context.Context, pid int) (player.Player, err
 	}
 
 	return players[0], nil
-}
-
-func (r *Repository) FindByProviderBetweenPIDs(ctx context.Context, pv provider.Provider, lower, upper int) ([]player.Player, error) {
-	query := sq.
-		Select(
-			columnPID,
-			columnNick,
-			columnProvider,
-			columnImported,
-		).
-		From(playerTable).
-		Where(sq.And{
-			sq.Eq{columnProvider: pv},
-			sq.GtOrEq{columnPID: lower},
-			sq.LtOrEq{columnPID: upper},
-		}).
-		OrderBy(
-			fmt.Sprintf("%s ASC", columnProvider),
-		)
-
-	rows, err := query.RunWith(r.db).QueryContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	players := make([]player.Player, 0)
-	for rows.Next() {
-		var p player.Player
-		if err = rows.Scan(
-			&p.PID,
-			&p.Nick,
-			&p.Provider,
-			&p.Imported,
-		); err != nil {
-			return nil, err
-		}
-
-		players = append(players, p)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return players, nil
 }
